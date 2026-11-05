@@ -3,6 +3,7 @@
 // GitHub sign-in first and brings them back with the intent. Links marked data-app-cta are swapped to
 // "Ouvrir l'app" in the browser once the session says the visitor is signed in (landing-scroll.tsx),
 // which keeps `/` static.
+import { MAINTENANCE_PATH, maintenanceOn } from "@/lib/maintenance";
 import { LANDING_TEMPLATE } from "./landing-template";
 
 export const LANDING_CONFIG = {
@@ -30,7 +31,11 @@ const GITHUB_MARK =
 const appCta = (cls: string, href: string, label: string) =>
   `<a class="${cls}" href="${href}" data-app-cta>${label}</a>`;
 
-export function landingMarkup(cfg = LANDING_CONFIG): string {
+/**
+ * With `maintenance` on, the GitHub App install link goes to /maintenance in the same tab (the app can't
+ * work while the API is down). Sign-in, intent and explore links already land there through the middleware.
+ */
+export function landingMarkup(cfg = LANDING_CONFIG, { maintenance = maintenanceOn() } = {}): string {
   const slots: Record<string, string> = {
     // The header's single CTA. It becomes a plain "Ouvrir l'app" pill once signed in (the swap's
     // textContent drops the logo). The GitHub App install link lives in the maintainers tile.
@@ -44,5 +49,7 @@ export function landingMarkup(cfg = LANDING_CONFIG): string {
     GITHUB_APP_URL: cfg.githubAppUrl,
     REPO_URL: cfg.repoUrl,
   };
-  return LANDING_TEMPLATE.replace(/\{\{([A-Z_]+)\}\}/g, (m, k: string) => slots[k] ?? m);
+  const html = LANDING_TEMPLATE.replace(/\{\{([A-Z_]+)\}\}/g, (m, k: string) => slots[k] ?? m);
+  if (!maintenance) return html;
+  return html.replaceAll(`href="${cfg.githubAppUrl}" target="_blank" rel="noopener"`, `href="${MAINTENANCE_PATH}"`);
 }

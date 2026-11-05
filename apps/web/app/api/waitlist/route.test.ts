@@ -51,7 +51,7 @@ describe("POST /api/waitlist", () => {
 describe("/maintenance page", () => {
   it("says when we're back, links Fly.io and shows the waitlist form", () => {
     const html = renderToStaticMarkup(MaintenancePage());
-    expect(html).toContain("De retour le 23 octobre.");
+    expect(html).toContain("De retour fin novembre.");
     expect(html).toContain('href="https://fly.io"');
     expect(html).toContain('name="email"');
     expect(html).toContain("Rejoindre la liste d&#x27;attente");

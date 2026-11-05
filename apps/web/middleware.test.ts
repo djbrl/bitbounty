@@ -31,18 +31,20 @@ describe("middleware", () => {
       expect(re.test(path)).toBe(false);
   });
 
-  it("shows /maintenance for every page while MAINTENANCE_MODE is on, before any sign-in check", async () => {
+  it("shows /maintenance for every page but the landing while MAINTENANCE_MODE is on, before any sign-in check", async () => {
     vi.stubEnv("AUTH_SECRET", SECRET);
     vi.stubEnv("MAINTENANCE_MODE", "1");
-    for (const path of ["/", "/app/hunt", "/dashboard", "/b/42?x=1"]) {
+    for (const path of ["/signin?callbackUrl=%2Fwelcome", "/welcome?intent=hunt", "/app/hunt", "/dashboard", "/explore", "/b/42?x=1"]) {
       const res = await middleware(req(path));
       expect(res?.headers.get("location")).toBeNull();
       expect(new URL(res!.headers.get("x-middleware-rewrite")!).pathname).toBe("/maintenance");
       expect(res?.headers.get("x-robots-tag")).toBe("noindex");
     }
-    const page = await middleware(req("/maintenance"));
-    expect(page?.headers.get("x-middleware-next")).toBe("1");
-    expect(page?.headers.get("x-middleware-rewrite")).toBeNull();
+    for (const path of ["/", "/maintenance"]) {
+      const page = await middleware(req(path));
+      expect(page?.headers.get("x-middleware-next")).toBe("1");
+      expect(page?.headers.get("x-middleware-rewrite")).toBeNull();
+    }
   });
 
   it("ignores MAINTENANCE_MODE when it isn't 1/true/on", async () => {
