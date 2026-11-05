@@ -59,6 +59,16 @@ describe("landing (L1)", () => {
     expect(css).not.toMatch(/@keyframes (?!bbl-)/);
   });
 
+  it("sends the GitHub App install link to /maintenance (same tab) during maintenance, and only then", () => {
+    const install = (h: string) => h.match(/<a [^>]*>Installer sur GitHub ›<\/a>/)![0];
+    expect(install(html)).toContain('href="https://github.com/apps/bitbounty-dakar" target="_blank"');
+    const down = landingMarkup(undefined, { maintenance: true });
+    expect(install(down)).toBe('<a class="link green-t" href="/maintenance">Installer sur GitHub ›</a>');
+    expect(down).not.toContain("github.com/apps/bitbounty-dakar");
+    // Sign-in and intent CTAs keep their links; the middleware shows /maintenance for them.
+    expect(down).toContain('href="/signin?callbackUrl=%2Fwelcome"');
+  });
+
   it("parses the welcome intent", () => {
     expect(parseIntent("maintain")).toBe("maintain");
     expect(parseIntent(["hunt", "x"])).toBe("hunt");
